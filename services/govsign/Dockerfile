@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     gcc \
     libssl-dev \
+    pkg-config \
     git \
     make
 
@@ -12,7 +13,11 @@ RUN apt-get update && apt-get install -y \
 RUN git clone -b 0.10.0 https://github.com/open-quantum-safe/liboqs.git \
     && cd liboqs \
     && mkdir build && cd build \
-    && cmake -DOQS_USE_OPENSSL=ON -DBUILD_SHARED_LIBS=ON -DOQS_BUILD_ONLY_LIB=ON .. \
+    && cmake -DOQS_USE_OPENSSL=ON \
+             -DOPENSSL_ROOT_DIR=/usr \
+             -DBUILD_SHARED_LIBS=ON \
+             -DOQS_BUILD_ONLY_LIB=ON \
+             -DOQS_DIST_BUILD=ON .. \
     && make -j$(nproc) && make install
 
 FROM python:3.11-slim
