@@ -25,11 +25,11 @@ RUN ldconfig
 WORKDIR /app
 
 # Install python dependencies
-COPY requirements.txt .
+COPY services/govsign/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY services/govsign/ .
 
 # Environment variables
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
