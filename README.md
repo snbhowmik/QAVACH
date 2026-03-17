@@ -24,10 +24,14 @@ As governments transition to "Digital First" models, traditional central identit
 
 QAVACH is a multi-layered ecosystem comprising five distinct components:
 
+![QAVACH System Architecture](assets/images/qavach_system_architecture.svg)
+
 ### 1. GovSign API (The Cryptographic Backbone)
 A high-performance microservice that government departments call to sign document hashes.
 - **Algorithms:** ML-DSA-65 (FIPS 204) for fast signing, SLH-DSA-SHAKE-128s (FIPS 205) for archival.
 - **CBOM Engine:** Logs every operation to a tamper-evident registry, identifying "at-risk" (classical) departments.
+
+![GovSign & Portal Architecture](assets/images/govsign_portal_architecture.svg)
 
 ### 2. Mock Issuer CA (The Mock Government)
 Simulates document issuance for departments like Income Tax (ITD), UIDAI, and Revenue.
@@ -66,28 +70,32 @@ For long-term document archival, we utilize **SLH-DSA (SPHINCS+)**.
 
 ### 3. Selective Disclosure via On-Device Policy Evaluation
 The technical originality of QAVACH lies in the decoupling of *Identity* from *Attestation*.
+
+![QR Challenge-Response Flow](assets/images/qr_challenge_response_flow.svg)
+
 - **The PGCA Protocol:** Instead of transmitting a PII-heavy document to a verifier, the verifier transmits an **Open Policy Agent (OPA) Compiled Policy (WASM)** and a unique challenge (nonce). 
 - **Local Execution:** The QAVACH app executes this policy against the citizen's decrypted record in a local secure context. 
 - **Mathematical Attestation:** The resulting signature (ML-DSA-44) covers the `(Nonce, PolicyID, BooleanResult)`. This mathematically proves that a trusted document satisfied a specific policy without revealing any document attributes to the verifier or host server.
 
+![QAVACH Verification Flow](assets/images/qavach_verification_flow.svg)
+
 ---
 
-## 🏗️ System Architecture & Components
+## 📊 CBOM Dashboard: Real-time National Audit
 
-QAVACH is a multi-layered ecosystem comprising five distinct components:
+QAVACH implements the world's first live **Cryptography Bill of Materials (CBOM)** for e-governance. It provides an automated inventory of every cryptographic algorithm used across government departments.
 
-### 1. GovSign API (The Cryptographic Backbone)
-A high-performance microservice that government departments call to sign document hashes.
-- **FIPS 204/205 Compliance:** Implements ML-DSA-65 for general issuance and SLH-DSA-SHAKE-128s for archival.
-- **CBOM Engine:** The "Cryptography Bill of Materials" registry tracks algorithm usage across the state, providing visibility into the "Quantum Risk" of different departments.
+![CBOM Dashboard](assets/images/cbom_dashboard.png)
 
-### 2. Mock Issuer CA (Document Issuance)
-Simulates document issuance for departments like Income Tax (ITD), UIDAI, and Revenue. It demonstrates the transition from classical (RSA-2048) to post-quantum (SLH-DSA) signatures in a live environment.
+The dashboard allows CISOs to identify "Migration Gaps" and prioritize departments requiring urgent PQC upgrades.
 
-### 3. QAVACH Mobile Wallet (Secure Enclave)
-A Flutter-based application that acts as the hardware-bound secure container for citizen credentials.
-- **Hybrid Encryption:** Documents are encrypted at rest using AES-256-GCM, with keys protected via **ML-KEM-768**.
-- **Privacy Core:** Evaluates Rego policies locally, ensuring that raw data is never exposed.
+---
+
+## 🛡️ Resilience in Action: Robust Error Handling
+
+Security is not just about the "Happy Path." QAVACH is designed to handle policy failures and tampering gracefully on the device.
+
+![Policy Check Failed Screenshot](assets/images/policy_check_failed.png)
 
 ---
 
@@ -129,4 +137,4 @@ For detailed setup and testing instructions, please refer to:
 3. **The CBOM View:** Point to the Dashboard. Say: *"We've inventoried the state's cryptography. We know exactly where the vulnerabilities are, and we've built the PQC path to fix them."*
 
 ---
-© 2026 Team 10.00% | Resilient E-Governance for a Quantum Future
+© 2026 Team 10.00% | QAVACH - Resilient E-Governance for a Quantum Future
