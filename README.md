@@ -15,6 +15,9 @@ As governments transition to "Digital First" models, traditional central identit
 **QAVACH solves this by:**
 1. **Decentralizing Proofs:** Using **Policy-Gated Credential Attestation (PGCA)**, where verification happens on the citizen's device, not a server.
 2. **Post-Quantum Security:** Transitioning signing and encryption to NIST FIPS 203/204/205 standards (ML-KEM, ML-DSA, SLH-DSA).
+
+![Why PQC is Necessary](assets/images/why_pqc_exists.svg)
+
 3. **Selective Disclosure:** Allowing citizens to prove eligibility (e.g., "Income < 3L") without sharing the original document or PII.
 4. **CBOM (Cryptography Bill of Materials):** Providing a real-time compliance dashboard for government CISOs to track the migration of state departments to PQC.
 
@@ -61,12 +64,31 @@ QAVACH implements a multi-algorithm defense strategy based on the final NIST Pos
 
 ### 1. Module Lattice-Based Cryptography (ML-DSA & ML-KEM)
 Most of the system's interactive operations rely on the **Module Learning with Errors (MLWE)** problem. Unlike classical RSA (integer factorization) or ECC (elliptic curve discrete logarithms), MLWE-based schemes are conjectured to be resistant to Shor's algorithm.
-- **ML-DSA (Dilithium):** Used for citizen attestation and real-time signing. It provides a balance of signature size and computational efficiency.
-- **ML-KEM (Kyber):** Used for key encapsulation in secure document storage. It enables the derivation of a shared symmetric key (AES-256) without direct transmission of the key.
+
+#### ML-KEM (Kyber): Secure Key Exchange
+Used for key encapsulation in secure document storage. It enables the derivation of a shared symmetric key (AES-256) without direct transmission of the key.
+
+![ML-KEM Explainer](assets/images/ml_kem_explainer.svg)
+
+- **The Math:** Security is based on the hardness of finding a secret vector `s` in a lattice given `A` and `t = As + e`, where `e` is a small error term. 
+
+#### ML-DSA (Dilithium): Digital Signatures
+Used for citizen attestation and real-time signing. It provides a balance of signature size and computational efficiency.
+
+![ML-DSA Explainer](assets/images/ml_dsa_explainer.svg)
+
+- **Originality:** QAVACH uses Dilithium's "Fiat-Shamir with Aborts" construction to ensure that the signature does not leak any information about the secret key lattice structure.
 
 ### 2. Stateless Hash-Based Signatures (SLH-DSA)
 For long-term document archival, we utilize **SLH-DSA (SPHINCS+)**. 
-- **Originality in Integrity:** Unlike lattice-based schemes, SLH-DSA relies solely on the security of the underlying cryptographic hash function (e.g., SHAKE-128). This provides a critical safety net against potential future mathematical breakthroughs in lattice cryptanalysis. It is "stateless," meaning it does not require the signer to track the number of signatures produced—a prerequisite for resilient distributed e-governance.
+
+![SLH-DSA Construction](assets/images/slhdsa_construction.svg)
+
+- **Originality in Integrity:** Unlike lattice-based schemes, SLH-DSA relies solely on the security of the underlying cryptographic hash function (e.g., SHAKE-128). This provides a critical safety net against potential future mathematical breakthroughs in lattice cryptanalysis.
+
+![SLH-DSA Hash Tree Structure](assets/images/slh_dsa_hash_tree.svg)
+
+- **The Structure:** It builds upon a hypertree hierarchy of Merkle trees (FORS trees), ensuring that even if one component is compromised, the overall integrity remains "Quantum Immutable."
 
 ### 3. Selective Disclosure via On-Device Policy Evaluation
 The technical originality of QAVACH lies in the decoupling of *Identity* from *Attestation*.
@@ -101,12 +123,18 @@ Security is not just about the "Happy Path." QAVACH is designed to handle policy
 
 ## 🔐 Cryptography Specification
 
+![All Algorithms in QAVACH Architecture](assets/images/all_algorithms_in_qavach.svg)
+
 | Primitive | Standard | Role | Resilience Basis |
 | :--- | :--- | :--- | :--- |
-| **ML-DSA-44 / 65** | FIPS 204 | Interactive Attestation | Module Learning with Errors (MLWE) |
-| **SLH-DSA-128s** | FIPS 205 | Archival Signing | Cryptographic Hash Function Security |
-| **ML-KEM-768** | FIPS 203 | Key Encapsulation | MLWE-based Key Exchange |
-| **AES-256-GCM** | — | At-Rest Encryption | Symmetric Security (Quantum Resistant) |
+| **ML-DSA** | FIPS 204 | Interactive Attestation | Module Learning with Errors (MLWE) |
+| **SLH-DSA** | FIPS 205 | Archival Signing | Cryptographic Hash Function Security |
+| **ML-KEM** | FIPS 203 | Key Encapsulation | MLWE-based Key Exchange |
+| **AES-256-GCM** | — | At-Rest Encryption | Authenticated Encryption with Galois Mode |
+
+![AES-GCM Authenticated Encryption](assets/images/aes_gcm_explainer.svg)
+
+![Integrity vs Signature](assets/images/sha_vs_signature.svg)
 
 ---
 
