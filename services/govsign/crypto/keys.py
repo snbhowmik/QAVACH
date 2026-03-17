@@ -7,7 +7,12 @@ import hashlib
 from pathlib import Path
 from .signer import generate_keypair, is_quantum_safe
 
-KEYS_DIR = Path(os.path.join(os.path.dirname(__file__), '..', 'keys'))
+# Use /app/keys inside Docker, or local keys dir for development
+if os.path.exists("/app"):
+    KEYS_DIR = Path("/app/keys")
+else:
+    KEYS_DIR = Path(os.path.join(os.path.dirname(__file__), '..', 'keys'))
+
 KEYS_DIR.mkdir(exist_ok=True)
 
 

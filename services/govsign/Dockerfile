@@ -30,11 +30,12 @@ RUN ldconfig
 WORKDIR /app
 
 # Install python dependencies
-COPY services/govsign/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY services/govsign/ .
+COPY . .
 
 # Environment variables
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH

@@ -23,6 +23,7 @@ LIBOQS_TO_NIST = {
     "SLH_DSA_PURE_SHAKE_128F": "SLH-DSA-SHAKE-128f",
     # Legacy names (for backward compat with spec docs)
     "SPHINCS+-SHAKE-128s": "SLH-DSA-SHAKE-128s",
+    "SPHINCS+-SHAKE-128s-simple": "SLH-DSA-SHAKE-128s",
     "SPHINCS+-SHAKE-128f": "SLH-DSA-SHAKE-128f",
 }
 
@@ -36,7 +37,10 @@ NIST_TO_LIBOQS = {
     "SLH-DSA-SHAKE-128s": "SLH_DSA_PURE_SHAKE_128S",
     "SLH_DSA_PURE_SHAKE_128S": "SLH_DSA_PURE_SHAKE_128S",
     # Accept legacy names from spec docs
-    "SPHINCS+-SHAKE-128s": "SLH_DSA_PURE_SHAKE_128S",
+    "SPHINCS+-SHAKE-128s": "SPHINCS+-SHAKE-128s-simple",
+    "SPHINCS+-SHAKE-128s-simple": "SPHINCS+-SHAKE-128s-simple",
+    "SLH-DSA-SHAKE-128s": "SPHINCS+-SHAKE-128s-simple",
+    "SLH_DSA_PURE_SHAKE_128S": "SPHINCS+-SHAKE-128s-simple",
 }
 
 

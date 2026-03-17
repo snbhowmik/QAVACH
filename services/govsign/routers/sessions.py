@@ -123,6 +123,7 @@ async def submit_proof(
         raise HTTPException(status_code=400, detail=f"Unknown issuer: {body.issuer_dept_id}")
 
     # 5. Verify proof signature using citizen's public key
+    # Use compact separators to match Dart's jsonEncode output (no spaces)
     proof_payload = json.dumps({
         "nonce": body.nonce,
         "claim_type": body.claim_type,
@@ -130,7 +131,7 @@ async def submit_proof(
         "citizen_id_hash": body.citizen_id_hash,
         "issuer_dept_id": body.issuer_dept_id,
         "doc_sig_id": body.doc_sig_id,
-    }, sort_keys=True).encode()
+    }, sort_keys=True, separators=(',', ':')).encode()
 
     citizen_pub_key = base64.b64decode(body.citizen_pub_key_b64)
     proof_sig = base64.b64decode(body.proof_signature_b64)

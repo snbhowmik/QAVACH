@@ -15,7 +15,7 @@ from config import DATABASE_URL
 SEED_DEPARTMENTS = [
     # PQC departments
     {"dept_id": "ITD", "name": "Income Tax Department",
-     "algorithm": "SLH_DSA_PURE_SHAKE_128S",
+     "algorithm": "SPHINCS+-SHAKE-128s-simple",
      "usage": "Credential signing, doc encryption", "status": "pqc"},
     {"dept_id": "UIDAI", "name": "UIDAI / Aadhaar",
      "algorithm": "ML-DSA-44",
@@ -46,12 +46,14 @@ SEED_DEPARTMENTS = [
 ]
 
 
-def seed():
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    db = Session()
+def seed_database():
+    print(f"Connecting to database at {DATABASE_URL}...")
+    engine = create_engine(DATABASE_URL)
+    Base.metadata.create_all(bind=engine)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = SessionLocal()
 
+    print("Checking existing departments...")
     for dept_data in SEED_DEPARTMENTS:
         dept_id = dept_data["dept_id"]
 
@@ -87,4 +89,4 @@ def seed():
 
 if __name__ == "__main__":
     print("Seeding GovSign departments...")
-    seed()
+    seed_database()

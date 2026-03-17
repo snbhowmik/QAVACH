@@ -47,7 +47,7 @@ async def issue_credentials(body: IssueRequest):
         income_cred = await issue_income_certificate(citizen_id)
         credentials.append(income_cred.model_dump())
     except Exception as e:
-        print(f"[warn] Failed to issue income cert for {citizen_id}: {e}")
+        print(f"[warn] Failed to issue income cert for {citizen_id}: {e.__class__.__name__}: {str(e)}")
 
     # 2. Aadhaar attestation (PQC — ML-DSA-44)
     try:
@@ -55,7 +55,7 @@ async def issue_credentials(body: IssueRequest):
         aadhaar_cred = await issue_aadhaar_attestation(citizen_id)
         credentials.append(aadhaar_cred.model_dump())
     except Exception as e:
-        print(f"[warn] Failed to issue Aadhaar attestation for {citizen_id}: {e}")
+        print(f"[warn] Failed to issue Aadhaar attestation for {citizen_id}: {e.__class__.__name__}: {str(e)}")
 
     # 3. Land ownership (Classical — RSA-2048) — only for citizens with land
     if citizen.get("land_parcel"):
@@ -64,7 +64,7 @@ async def issue_credentials(body: IssueRequest):
             land_cred = await issue_land_ownership(citizen_id)
             credentials.append(land_cred.model_dump())
         except Exception as e:
-            print(f"[warn] Failed to issue land record for {citizen_id}: {e}")
+            print(f"[warn] Failed to issue land record for {citizen_id}: {e.__class__.__name__}: {str(e)}")
 
     # 4. Health record (Classical — RSA-2048)
     try:
@@ -72,7 +72,7 @@ async def issue_credentials(body: IssueRequest):
         health_cred = await issue_health_record(citizen_id)
         credentials.append(health_cred.model_dump())
     except Exception as e:
-        print(f"[warn] Failed to issue health record for {citizen_id}: {e}")
+        print(f"[warn] Failed to issue health record for {citizen_id}: {e.__class__.__name__}: {str(e)}")
 
     # Store credentials
     credential_store[citizen_id] = credentials

@@ -13,13 +13,6 @@ class ScanScreen extends ConsumerStatefulWidget {
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _isProcessing = false;
-  final MobileScannerController _controller = MobileScannerController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   void _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
@@ -56,12 +49,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       }
 
       if (mounted) {
-        context.push('/scan/verify', extra: {
+        await context.push('/scan/verify', extra: {
           'qrJson': code,
           'claimType': claimType,
         });
       }
     } finally {
+      // Small delay before allowing next scan to prevent instant re-detection
+      await Future.delayed(const Duration(milliseconds: 1000));
       if (mounted) {
         setState(() => _isProcessing = false);
       }
@@ -87,7 +82,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 alignment: Alignment.center,
                 children: [
                   MobileScanner(
-                    controller: _controller,
                     onDetect: _onDetect,
                   ),
                   // Simple corner brackets

@@ -1,7 +1,7 @@
 // lib/config.dart
-const String kGovSignUrl = String.fromEnvironment('GOVSIGN_URL', defaultValue: 'http://172.19.127.192:8000');
-const String kMockCaUrl = String.fromEnvironment('MOCK_CA_URL', defaultValue: 'http://172.19.127.192:8001');
-const String kSidecarUrl = String.fromEnvironment('SIDECAR_URL', defaultValue: 'http://172.19.127.192:8002');
+const String kGovSignUrl = String.fromEnvironment('GOVSIGN_URL', defaultValue: 'http://13.126.194.20:8000');
+const String kMockCaUrl = String.fromEnvironment('MOCK_CA_URL', defaultValue: 'http://13.126.194.20:8001');
+const String kSidecarUrl = String.fromEnvironment('SIDECAR_URL', defaultValue: 'http://13.126.194.20:8002');
 
 // Demo citizen mappings (Aadhaar prefix -> citizen ID)
 const Map<String, String> kDemoCitizenMap = {

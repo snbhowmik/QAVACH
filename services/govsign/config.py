@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
+# load_dotenv is removed to rely on shell/docker environment variables in production
 
 GOVSIGN_HOST = os.getenv("GOVSIGN_HOST", "http://localhost:8000")
 GOVSIGN_ADMIN_KEY = os.getenv("GOVSIGN_ADMIN_KEY", "dev-admin-key-change-in-prod")
