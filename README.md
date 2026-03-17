@@ -1,194 +1,132 @@
-# QAVACH — Build Order & System Overview
+# QAVACH: PQC-Powered Resilient E-Governance Architecture
 
-## What This System Is
+![QAVACH Logo](https://img.shields.io/badge/Status-Post--Quantum--Safe-brightgreen)
+![Security Architecture](https://img.shields.io/badge/Architecture-Zero--Trust-blue)
+![Platform](https://img.shields.io/badge/Platform-Flutter%20%7C%20FastAPI%20%7C%20Next.js-blueviolet)
 
-QAVACH is a post-quantum cryptography (PQC) identity and document verification platform for Indian e-governance. It demonstrates how government services can issue, store, and verify citizen credentials using NIST-standardized PQC algorithms — without the original document ever leaving the citizen's device.
-
-The system has three layers:
-
-1. **GovSign API** — a microservice that government departments call to sign documents with PQC algorithms. It maintains a CBOM (Cryptography Bill of Materials) registry tracking which departments are PQC-compliant and which are still on classical crypto.
-
-2. **QAVACH Flutter App** — the citizen-facing mobile wallet. Downloads documents from DigiLocker (mocked), stores them encrypted with ML-KEM-768 + AES-256-GCM, and when a verifier portal requests a claim, runs an OPA (Open Policy Agent) policy on-device to decide whether to generate a signed proof.
-
-3. **Verifier Portals** — five web portals that consume QAVACH proofs. Three are PQC-enabled (scholarship, home loan, land mutation). Two are deliberately classical/legacy (ration card, trade licence) to demonstrate the migration gap and show CBOM warnings.
+**QAVACH** (Hindi for *Armour*) is a next-generation digital service delivery framework designed for the future of Indian e-governance. It addresses the "Triple Threat" of modern digital states—Data Integrity, Availability, and Privacy—by implementing a **Zero-Trust Architecture** powered by **NIST-standardized Post-Quantum Cryptography (PQC)**.
 
 ---
 
-## Core Cryptographic Primitives
+## 🏛️ Vision & Problem Statement
 
-| Algorithm | NIST Standard | Role in System | Signature Size |
-|---|---|---|---|
-| ML-DSA-44 (Dilithium2) | FIPS 204 | Fast interactive PGCA proofs, live verification | 2,420 bytes |
-| ML-DSA-65 (Dilithium3) | FIPS 204 | Department signing (medium security) | 3,309 bytes |
-| SLH-DSA-SHAKE-128s | FIPS 205 | Long-term document archival signatures | 7,856 bytes |
-| ML-KEM-768 (Kyber768) | FIPS 203 | Key encapsulation for document encryption | N/A (KEM) |
-| AES-256-GCM | — | Symmetric encryption of documents in cloud | N/A |
+As governments transition to "Digital First" models, traditional central identity registries have become high-value targets. A single breach of a central database can compromise millions of citizen records. Furthermore, the impending "Quantum Harvest" (Store now, Decrypt later) threat makes today's RSA and ECDSA-based signatures vulnerable to future decryption.
 
-**Critical distinction:**
-- ML-KEM is a Key Encapsulation Mechanism. It produces a (ciphertext, sharedSecret) pair. The sharedSecret is used as the AES-256-GCM key. ML-KEM never encrypts data directly.
-- QR codes carry ONLY: `{session_id, nonce, claim_type, callback_url}` (~120 bytes). The signature (2.4KB+) travels over HTTPS POST, never inside a QR.
+**QAVACH solves this by:**
+1. **Decentralizing Proofs:** Using **Policy-Gated Credential Attestation (PGCA)**, where verification happens on the citizen's device, not a server.
+2. **Post-Quantum Security:** Transitioning signing and encryption to NIST FIPS 203/204/205 standards (ML-KEM, ML-DSA, SLH-DSA).
+3. **Selective Disclosure:** Allowing citizens to prove eligibility (e.g., "Income < 3L") without sharing the original document or PII.
+4. **CBOM (Cryptography Bill of Materials):** Providing a real-time compliance dashboard for government CISOs to track the migration of state departments to PQC.
 
 ---
 
-## Build Order (Strict — Each Step Has Dependencies)
+## 🏗️ System Architecture
 
-```
-PHASE 1 — Backend Infrastructure
-  Step 1 → 01_GOVSIGN_API.md          (FastAPI + liboqs-python)
-  Step 2 → 02_MOCK_ISSUER_CA.md       (Mock government CA, issues PQC certs)
+QAVACH is a multi-layered ecosystem comprising five distinct components:
 
-PHASE 2 — Compliance Dashboard  
-  Step 3 → 03_CBOM_DASHBOARD.md       (React + reads GovSign /cbom endpoint)
+### 1. GovSign API (The Cryptographic Backbone)
+A high-performance microservice that government departments call to sign document hashes.
+- **Algorithms:** ML-DSA-65 (FIPS 204) for fast signing, SLH-DSA-SHAKE-128s (FIPS 205) for archival.
+- **CBOM Engine:** Logs every operation to a tamper-evident registry, identifying "at-risk" (classical) departments.
 
-PHASE 3 — Mobile App
-  Step 4 → 04_QAVACH_FLUTTER.md       (Flutter + OPA WASM + FFI to liboqs)
+### 2. Mock Issuer CA (The Mock Government)
+Simulates document issuance for departments like Income Tax (ITD), UIDAI, and Revenue.
+- **Onboarding:** Integrates with the QAVACH app to issue PQC-signed credentials.
 
-PHASE 4 — PQC Portals (each is independent after Step 1 is running)
-  Step 5 → 05_PORTAL_SCHOLARSHIP.md   (Next.js — income < 3L claim)
-  Step 6 → 06_PORTAL_HOMELOAN.md      (Next.js — income + CIBIL composite claim)
-  Step 7 → 07_PORTAL_LAND_MUTATION.md (Next.js — property ownership claim)
+### 3. QAVACH Mobile Wallet (The Citizen's Armour)
+A Flutter-based mobile application that acts as a secure container for citizen credentials.
+- **On-Device Policy Engine:** Runs Open Policy Agent (OPA) Rego policies to evaluate claims locally.
+- **Secure Enclave:** Stores keys and documents encrypted with **ML-KEM-768 + AES-256-GCM**. Private keys never leave the device.
 
-PHASE 5 — Legacy Portals (show the problem, no PQC)
-  Step 8 → 08_LEGACY_PORTALS.md       (Ration card + Trade licence — RSA/ECDSA)
-```
+### 4. Verifier Portals (The Consumer Ecosystem)
+A set of five demonstration portals:
+- **Scholarship & Home Loan:** PQC-enabled, using QR-based selective disclosure.
+- **Land Mutation:** Shows a migration warning for classical credentials.
+- **Ration Card & Trade Licence:** Legacy portals that demonstrate the risks of "Classical-only" architectures.
 
-You can work on Steps 5–8 in parallel once Step 1 is running. Steps 5–8 are independent of each other.
-
----
-
-## Shared Environment Variables
-
-Create a `.env` file at the repo root. All services read from this.
-
-```env
-# GovSign API
-GOVSIGN_HOST=http://localhost:8000
-GOVSIGN_ADMIN_KEY=dev-admin-key-change-in-prod
-
-# Mock Issuer CA
-MOCK_CA_HOST=http://localhost:8001
-
-# Session store (Redis)
-REDIS_URL=redis://localhost:6379
-
-# Cloud document store (Supabase or local MinIO for dev)
-STORAGE_URL=http://localhost:9000
-STORAGE_KEY=minioadmin
-STORAGE_SECRET=minioadmin
-STORAGE_BUCKET=qavach-docs
-
-# Flutter app (these go in lib/config.dart)
-FLUTTER_GOVSIGN_URL=http://10.0.2.2:8000
-FLUTTER_MOCK_CA_URL=http://10.0.2.2:8001
-
-# Portal shared secret (portals register with GovSign using this)
-PORTAL_REGISTRATION_SECRET=portal-secret-change-in-prod
-```
+### 5. CBOM Dashboard (The Auditor's View)
+A React-based "Command Centre" visualizing the national PQC migration status.
 
 ---
 
-## Repository Structure
+---
 
-```
-qavach/
-├── 00_BUILD_ORDER.md           ← you are here
-├── 01_GOVSIGN_API.md
-├── 02_MOCK_ISSUER_CA.md
-├── 03_CBOM_DASHBOARD.md
-├── 04_QAVACH_FLUTTER.md
-├── 05_PORTAL_SCHOLARSHIP.md
-├── 06_PORTAL_HOMELOAN.md
-├── 07_PORTAL_LAND_MUTATION.md
-├── 08_LEGACY_PORTALS.md
-│
-├── services/
-│   ├── govsign/                ← Step 1 output
-│   ├── mock-ca/                ← Step 2 output
-│   └── redis/                  ← docker-compose spins this up
-│
-├── dashboard/                  ← Step 3 output (React)
-│
-├── qavach_app/                 ← Step 4 output (Flutter)
-│
-└── portals/
-    ├── scholarship/            ← Step 5
-    ├── homeloan/               ← Step 6
-    ├── land-mutation/          ← Step 7
-    ├── ration-card/            ← Step 8
-    └── trade-licence/          ← Step 8
-```
+## 🔐 Cryptographic Principles & Mathematical Foundation
+
+QAVACH implements a multi-algorithm defense strategy based on the final NIST Post-Quantum Cryptography standards (FIPS 203, 204, and 205). Our architecture is original in its application of **Policy-Gated Credential Attestation (PGCA)**, which bridges the gap between high-assurance integrity and granular privacy.
+
+### 1. Module Lattice-Based Cryptography (ML-DSA & ML-KEM)
+Most of the system's interactive operations rely on the **Module Learning with Errors (MLWE)** problem. Unlike classical RSA (integer factorization) or ECC (elliptic curve discrete logarithms), MLWE-based schemes are conjectured to be resistant to Shor's algorithm.
+- **ML-DSA (Dilithium):** Used for citizen attestation and real-time signing. It provides a balance of signature size and computational efficiency.
+- **ML-KEM (Kyber):** Used for key encapsulation in secure document storage. It enables the derivation of a shared symmetric key (AES-256) without direct transmission of the key.
+
+### 2. Stateless Hash-Based Signatures (SLH-DSA)
+For long-term document archival, we utilize **SLH-DSA (SPHINCS+)**. 
+- **Originality in Integrity:** Unlike lattice-based schemes, SLH-DSA relies solely on the security of the underlying cryptographic hash function (e.g., SHAKE-128). This provides a critical safety net against potential future mathematical breakthroughs in lattice cryptanalysis. It is "stateless," meaning it does not require the signer to track the number of signatures produced—a prerequisite for resilient distributed e-governance.
+
+### 3. Selective Disclosure via On-Device Policy Evaluation
+The technical originality of QAVACH lies in the decoupling of *Identity* from *Attestation*.
+- **The PGCA Protocol:** Instead of transmitting a PII-heavy document to a verifier, the verifier transmits an **Open Policy Agent (OPA) Compiled Policy (WASM)** and a unique challenge (nonce). 
+- **Local Execution:** The QAVACH app executes this policy against the citizen's decrypted record in a local secure context. 
+- **Mathematical Attestation:** The resulting signature (ML-DSA-44) covers the `(Nonce, PolicyID, BooleanResult)`. This mathematically proves that a trusted document satisfied a specific policy without revealing any document attributes to the verifier or host server.
 
 ---
 
-## Docker Compose (Infrastructure Only)
+## 🏗️ System Architecture & Components
 
-Create `docker-compose.yml` at repo root before starting any step:
+QAVACH is a multi-layered ecosystem comprising five distinct components:
 
-```yaml
-version: '3.9'
-services:
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
+### 1. GovSign API (The Cryptographic Backbone)
+A high-performance microservice that government departments call to sign document hashes.
+- **FIPS 204/205 Compliance:** Implements ML-DSA-65 for general issuance and SLH-DSA-SHAKE-128s for archival.
+- **CBOM Engine:** The "Cryptography Bill of Materials" registry tracks algorithm usage across the state, providing visibility into the "Quantum Risk" of different departments.
 
-  minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
+### 2. Mock Issuer CA (Document Issuance)
+Simulates document issuance for departments like Income Tax (ITD), UIDAI, and Revenue. It demonstrates the transition from classical (RSA-2048) to post-quantum (SLH-DSA) signatures in a live environment.
 
-volumes:
-  minio_data:
-```
-
-Run `docker-compose up -d` before starting development.
+### 3. QAVACH Mobile Wallet (Secure Enclave)
+A Flutter-based application that acts as the hardware-bound secure container for citizen credentials.
+- **Hybrid Encryption:** Documents are encrypted at rest using AES-256-GCM, with keys protected via **ML-KEM-768**.
+- **Privacy Core:** Evaluates Rego policies locally, ensuring that raw data is never exposed.
 
 ---
 
-## Key Concepts Explained (Read Before Building Anything)
+## 🔐 Cryptography Specification
 
-### Policy-Gated Credential Attestation (PGCA)
-The core innovation. Rather than the verifier checking a credential, the CITIZEN'S DEVICE decides what can be proven. Only when an OPA (Open Policy Agent) Rego policy passes on-device does the app generate a signed proof. The signature is proof of policy compliance. The original document never leaves the device.
-
-### CBOM (Cryptography Bill of Materials)
-Every document signed through GovSign creates a CBOM log entry: `{dept_id, algorithm, doc_type, timestamp, quantum_safe: bool}`. The dashboard reads this log and shows each department's migration status. This answers the auditor question: "which parts of your system are still vulnerable?"
-
-### The QR Size Problem (Solved)
-SLH-DSA signatures are 7,856 bytes. ML-DSA-44 signatures are 2,420 bytes. Neither fits in a QR code. **Solution:** The QR contains only `{session_id: uuid, nonce: 32-byte-hex, claim_type: string, callback: url}` — roughly 120 bytes. The QAVACH app reads the QR, generates the proof, and POSTs it to the `callback` URL via HTTPS. The portal polls its own backend for the result.
-
-### Hybrid Cryptography for Storage
-ML-KEM-768 is a KEM — it encapsulates a random symmetric key. The flow:
-1. `(ciphertext, sharedSecret) = ML-KEM-768.Encapsulate(userPublicKey)`
-2. `encryptedDoc = AES-256-GCM.Encrypt(key=sharedSecret, data=document)`
-3. Store `{ciphertext, encryptedDoc}` in cloud
-4. To decrypt: `sharedSecret = ML-KEM-768.Decapsulate(userPrivateKey, ciphertext)`
-5. `document = AES-256-GCM.Decrypt(key=sharedSecret, data=encryptedDoc)`
-
-The private key NEVER leaves the device's secure storage.
+| Primitive | Standard | Role | Resilience Basis |
+| :--- | :--- | :--- | :--- |
+| **ML-DSA-44 / 65** | FIPS 204 | Interactive Attestation | Module Learning with Errors (MLWE) |
+| **SLH-DSA-128s** | FIPS 205 | Archival Signing | Cryptographic Hash Function Security |
+| **ML-KEM-768** | FIPS 203 | Key Encapsulation | MLWE-based Key Exchange |
+| **AES-256-GCM** | — | At-Rest Encryption | Symmetric Security (Quantum Resistant) |
 
 ---
 
-## Demo Script (For Hackathon Judges)
+---
 
-**PQC Path (Scholarship portal):**
-1. Open QAVACH app → "I am Priya Sharma, income ₹2.1L/year"
-2. Open Scholarship portal on laptop → shows QR
-3. Scan QR with QAVACH
-4. App shows: "Policy check: income < ₹3,00,000 — PASS"
-5. App shows: "Generating ML-DSA-44 proof..."
-6. Portal shows: "Verified — Eligible. Signed with ML-DSA-44 (FIPS 204)"
-7. Point to CBOM dashboard — ITD shown as "PQC Ready" in green
+## 📂 Repository Structure
 
-**Classical Path (Ration Card portal):**
-1. Open Ration Card portal on laptop → shows QR
-2. Scan QR with QAVACH
-3. Portal shows yellow warning banner: "This portal uses RSA-2048 — not quantum-safe"
-4. Point to CBOM dashboard — Revenue Dept shown as "Classical — High Risk" in red
+- `services/govsign/`: FastAPI PQC signing microservice.
+- `services/mock-ca/`: Simulates government issuers.
+- `qavach_app/`: Flutter mobile wallet (Android).
+- `dashboard/`: React CBOM compliance dashboard.
+- `portals/`: 5 Verifier portals (Scholarship, Home Loan, Land Mutation, Ration Card, Trade Licence).
 
-**The contrast is the demo. Say: "Same app, same citizen, same document — two completely different levels of security depending on whether the department has migrated."**
+---
+
+## 🛠️ Getting Started
+
+For detailed setup and testing instructions, please refer to:
+- 📜 **[DEPLOYMENT.md](DEPLOYMENT.md)**: Steps to replicate the full stack.
+- 🛡️ **[SECURITY.md](SECURITY.md)**: Security audit and architecture deep-dive.
+
+---
+
+## 🏆 Hackathon Demo Script
+
+1. **The PQC Path:** Scan the Scholarship QR with the QAVACH app. See the on-device "Policy Check" animation. Observe the "Verified - PQC Safe" result on the portal.
+2. **The Legacy Path:** Open the Ration Card portal. Notice the "Classical Risk" warning. Upload a document and see the CBOM dashboard turn Red for the Revenue Dept.
+3. **The CBOM View:** Point to the Dashboard. Say: *"We've inventoried the state's cryptography. We know exactly where the vulnerabilities are, and we've built the PQC path to fix them."*
+
+---
+© 2026 Team 10.00% | Resilient E-Governance for a Quantum Future
